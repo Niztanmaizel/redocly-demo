@@ -90,8 +90,6 @@ paths:
                     example: Incorrect credentials
   /api/logout:
     post:
-      security:
-        - Authentication: []
       summary: User logout
       tags:
         - Authentication
@@ -119,8 +117,6 @@ paths:
                     example: Error!
   /api/nce-management/deploy:
     post:
-      security:
-        - Authentication: []
       summary: Create NCE
       tags:
         - NCE Management
