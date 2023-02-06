@@ -144,7 +144,6 @@ paths:
               properties:
                 name:
                   allOf:
-                    - $ref: "#/components/schemas/nameType"
                     - description: >-
                         NCE name. Use numbers and / or letters. The name must be
                         at least four characters in length. No special
@@ -154,21 +153,14 @@ paths:
                   example: v13.0
                   description: DNOS version, for example 11.1
                 oobIpv4Address:
-                  oneOf:
-                    - $ref: "#/components/schemas/ipv4"
-                    - $ref: "#/components/schemas/dhcp"
                   example: Acquired
                   description: "mgmt0 IPv4 address: (X.X.X.X/Acquired) Acquired - DHCP mode."
                 oobIpv4Subnet:
                   allOf:
-                    - $ref: "#/components/schemas/ipv4PrefixLength"
                     - description: >-
                         mgmt0 IPv4 prefix length. System ignores oobIpv4Subnet
                         in DHCP mode.
                 oobIpv6Address:
-                  oneOf:
-                    - $ref: "#/components/schemas/ipv6"
-                    - $ref: "#/components/schemas/dhcp"
                   example: Acquired
                   description: >-
                     mgmt0 IPv6 address: (CAFE::1/Acquired). Acquired - DHCP
@@ -176,17 +168,14 @@ paths:
                     will not be set.
                 oobIpv6Subnet:
                   allOf:
-                    - $ref: "#/components/schemas/ipv6PrefixLength"
                     - description: >-
                         mgmt0 IPv6 subnet mask. System ignores oobIpv6Subnet
                         incase DHCP mode or oobIpv6Address is not specified
                 oobIpv4DefaultGateway:
                   allOf:
-                    - $ref: "#/components/schemas/ipv4"
                     - description: Default gateway IPv4 address for the OOB mgmt inteface
                 oobIpv6DefaultGateway:
                   allOf:
-                    - $ref: "#/components/schemas/ipv6"
                     - description: Default gateway IPv6 address for the OOB mgmt inteface
                 inBandIpv4Address:
                   allOf:
@@ -197,28 +186,23 @@ paths:
                     - $ref: "#/components/schemas/ipv4"
                 inBandIpv4Subnet:
                   allOf:
-                    - $ref: "#/components/schemas/ipv4PrefixLength"
                     - description: Monitoring channel - Lo-0 IPv4 subnet mask
                 inBandIpv6Address:
                   allOf:
-                    - $ref: "#/components/schemas/ipv6"
                     - description: >-
                         Monitoring channel - Lo-0 IPv6 address (CAFE::1). There
                         must be at least one IPv4 or IPv6 VIP Out of Band
                         address
                 inBandIpv6Subnet:
                   allOf:
-                    - $ref: "#/components/schemas/ipv6PrefixLength"
                     - description: Monitoring channel - Lo-0 IPv6 subnet mask
                 minimumNccs:
                   allOf:
-                    - $ref: "#/components/schemas/minimumNccType"
                     - description: >-
                         [1-2], Minimum number of registred NCCs to start the
                         deployment
                 siteId:
                   allOf:
-                    - $ref: "#/components/schemas/uuid"
                     - description: NCE site
                 configurationData:
                   type: object
@@ -233,18 +217,15 @@ paths:
                       description: user name of for configuration commit
                     configurationId:
                       allOf:
-                        - $ref: "#/components/schemas/uuid"
                         - description: configuration transaction id
                 formation:
                   type: object
                   properties:
                     type:
                       allOf:
-                        - $ref: "#/components/schemas/formationType"
                         - description: "NCE formation: Single or Cluster"
                     specific:
                       allOf:
-                        - $ref: "#/components/schemas/specificType"
                         - description: >-
                             NCE type:
                             SA-40C/SA-10CD/SA-32CD/SA-36CD/SA-64XXV8C/SA-64X12C-S/CL-16/CL-96/CL-32/CL-48/CL-64/CL-76/CL-192
@@ -281,10 +262,6 @@ paths:
                   message:
                     type: string
                     example: Starting deployment
-                  processId:
-                    $ref: "#/components/schemas/uuid"
-                  clusterId:
-                    $ref: "#/components/schemas/uuid"
           description: Starting deployment
         "403":
           content:
