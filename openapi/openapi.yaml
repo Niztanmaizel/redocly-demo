@@ -1,56 +1,90 @@
-openapi: 3.0.3
+openapi: 3.0.2
 info:
-  version: 1.0.0
-  title: What's for dinner?
-  termsOfService: 'https://docs.whatsfordinner.dev/terms/'
-  contact:
-    email: contact@example.com
-    url: 'https://docs.whatsfordinner.dev'
-  license:
-    name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-  x-logo:
-    url: './wfd-logo.png'
-  description:
-    $ref: ./info-description.md
-tags:
-  - name: Listing ingredients
-    description: |
-      List ingredients on-hand, and an audit trail of ingredients.
-  - name: Adding ingredients
-    description: |
-      Add ingredients one-by-one or by uploading photos of refrigerator, cabinet, pantry contents, or grocery receipts.
-      What's for dinner parses uploaded photos and adds the ingredients to the kitchen.
-  - name: Reducing ingredients
-    description: |
-      Cook, eat, donate, or discard ingredients.   
+  title: Northbound REST API DNOR
+  description: |-
+    API definitions for programmatic access to DriveNets Network Orchestrator (DNOR). The API calls are modelled after, and reflected in the DNOR User Interface.
+
+    When you first sign up with the SSP, a POST API request (/auth/login) is sent with the following payload:
+
+      *{"username":"user@company.com"*,*"password":"mypass"*}, **where** *“user@company.com”* and *“mypass”* are the email address and password you provided during sign up.
+
+      The API call returns a token value. This is the authorization token for your account. This token is sent in the header of all API requests, as follows:
+      1. Authorization: Bearer <token-value>
+      The REST API enables you to interact with the SP systems to provision services for your organization from your server-side applications.
+      2. Some other text
+
+      ## H2 Heading
+
+      This is also an example of an unordered list:
+      - Some item
+      - Another item
+
+      ### H3 Heading
+
+      #### H4 Heading
+
+      Here is a link: (I copied)
+
+        [Dinosuars](https://en.wikipedia.org/wiki/Dinosaurs)
+
+      The [New Horizons](http://pluto.jhuapl.edu/) space probe took photos of Pluto.
+
+    Now for my next trick, I will add an image :)
+
+    This image is form a site called Lorem Picsum....
+
+    ![True colour image](https://picsum.photos/200/300)
+
+  version: v7.0.6
 servers:
-  - url: https://a24994f9-3b7b-49e1-96c7-f57ce08ceeb8.remockly.com
-    description: Mock server
-  - url: 'https://api.whatsfordinner.dev'
-    description: Production
+  - url: http://localhost
+tags:
+  - name: Northbound REST API
 paths:
-  '/photos':
-    $ref: 'paths/photos.yaml'
-  '/ingredients':
-    $ref: 'paths/ingredients.yaml'
-  '/ingredients-reduction':
-    $ref: 'paths/ingredients-reduction.yaml'
-  '/available-ingredients/{kitchenId}':
-    $ref: 'paths/available-ingredients@{kitchenId}.yaml'
-  # '/ingredients-audit':
-  #   $ref: 'paths/ingredients-audit.yaml'
-components:
-  securitySchemes:
-    JWT:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-    auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: 'http://example.com/api/oauth/dialog'
-          scopes:
-            'read:kitchen': read kitchen ingredients
-            'write:kitchen': modify kitchen ingredients
+  /api/login:
+    post:
+      summary: User login
+      tags:
+        - Authentication
+      description: Use DNOR credentials to log into DNOR. If you dont have credentials contacted your system administrator.
+      requestBody:
+        description: Login credentials<br/>
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: superadmin
+                password:
+                  type: string
+                  example: superadmin
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: New token created!
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUz...
+        "403":
+          description: Incorrect username / password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incorrect credentials
