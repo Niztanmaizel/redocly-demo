@@ -183,7 +183,6 @@ paths:
                         Monitoring channel - Lo-0 IPv4 address (X.X.X.X). There
                         must be at least one IPv4 or IPv6 VIP Out of Band
                         address
-                    - $ref: "#/components/schemas/ipv4"
                 inBandIpv4Subnet:
                   allOf:
                     - description: Monitoring channel - Lo-0 IPv4 subnet mask
