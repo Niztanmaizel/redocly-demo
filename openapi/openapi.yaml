@@ -88,3 +88,32 @@ paths:
                   message:
                     type: string
                     example: Incorrect credentials
+  /api/logout:
+    post:
+      security:
+        - Authentication: []
+      summary: User logout
+      tags:
+        - Authentication
+      description: Use DNOR credentials to log out of DNOR.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User session logout succeeded
+        "403":
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error!
