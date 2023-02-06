@@ -1,57 +1,2121 @@
-openapi: 3.0.3
+openapi: 3.0.2
 info:
-  version: 1.0.0
-  title: What's for dinner?
-  termsOfService: 'https://docs.whatsfordinner.dev/terms/'
-  contact:
-    email: contact@example.com
-    url: 'https://docs.whatsfordinner.dev'
-  license:
-    name: Apache 2.0
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-  x-logo:
-    url: './wfd-logo.png'
-  description:
-    $ref: ./info-description.md
-tags:
-  - name: Listing ingredients
-    description: |
-      List ingredients on-hand, and an audit trail of ingredients.
-  - name: Adding ingredients
-    description: |
-      Add ingredients one-by-one or by uploading photos of refrigerator, cabinet, pantry contents, or grocery receipts.
+  title: Northbound REST API DNOR
+  description: |-
+    API definitions for programmatic access to DriveNets Network Orchestrator (DNOR). The API calls are modelled after, and reflected in the DNOR User Interface.
 
-      What's for dinner parses uploaded photos and adds the ingredients to the kitchen.
-  - name: Reducing ingredients
-    description: |
-      Cook, eat, donate, or discard ingredients.   
+    When you first sign up with the SSP, a POST API request (/auth/login) is sent with the following payload:
+
+      *{"username":"user@company.com"*,*"password":"mypass"*}, **where** *“user@company.com”* and *“mypass”* are the email address and password you provided during sign up.
+
+      The API call returns a token value. This is the authorization token for your account. This token is sent in the header of all API requests, as follows:
+      1. Authorization: Bearer <token-value>
+      The REST API enables you to interact with the SP systems to provision services for your organization from your server-side applications.
+      2. Some other text
+
+      ## H2 Heading
+
+      This is also an example of an unordered list:
+      - Some item
+      - Another item
+
+      ### H3 Heading
+
+      #### H4 Heading
+
+      Here is a link: (I copied)
+
+        [Dinosuars](https://en.wikipedia.org/wiki/Dinosaurs)
+
+      The [New Horizons](http://pluto.jhuapl.edu/) space probe took photos of Pluto.
+
+    Now for my next trick, I will add an image :)
+
+    This image is form a site called Lorem Picsum....
+
+    ![True colour image](https://picsum.photos/200/300)
+
+  version: v7.0.6
 servers:
-  - url: https://a24994f9-3b7b-49e1-96c7-f57ce08ceeb8.remockly.com
-    description: Mock server
-  - url: 'https://api.whatsfordinner.dev'
-    description: Production
+  - url: http://localhost
+tags:
+  - name: Northbound REST API
 paths:
-  '/photos':
-    $ref: 'paths/photos.yaml'
-  '/ingredients':
-    $ref: 'paths/ingredients.yaml'
-  '/ingredients-reduction':
-    $ref: 'paths/ingredients-reduction.yaml'
-  '/available-ingredients/{kitchenId}':
-    $ref: 'paths/available-ingredients@{kitchenId}.yaml'
-  # '/ingredients-audit':
-  #   $ref: 'paths/ingredients-audit.yaml'
+  /api/login:
+    post:
+      summary: User login
+      tags:
+        - Authentication
+      description: Use DNOR credentials to log into DNOR. If you dont have credentials contacted your system administrator.
+      requestBody:
+        description: Login credentials<br/>
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: superadmin
+                password:
+                  type: string
+                  example: superadmin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: New token created!
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUz...
+        '403':
+          description: Incorrect username / password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incorrect credentials
+  /api/logout:
+    post:
+      security:
+        - Authentication: []
+      summary: User logout
+      tags:
+        - Authentication
+      description: Use DNOR credentials to log out of DNOR.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User session logout succeeded
+        '403':
+          description: Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error!
+  /api/nce-management/deploy:
+    post:
+      security:
+        - Authentication: []
+      summary: Create NCE
+      tags:
+        - NCE Management
+      description: Deploy DNOS to create an NCE.
+      requestBody:
+        description: NCE Configuration. (Click Schema to display the element descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - oobIpv4Address
+                - oobIpv4Subnet
+                - candidateDNOSYaml
+                - inBandIpv4Address
+                - inBandIpv4Subnet
+                - formation
+                - nccs
+              properties:
+                name:
+                  allOf:
+                    - $ref: '#/components/schemas/nameType'
+                    - description: >-
+                        NCE name. Use numbers and / or letters. The name must be
+                        at least four characters in length. No special
+                        characters such as !@#$ can be used
+                candidateDNOSYaml:
+                  type: string
+                  example: v13.0
+                  description: DNOS version, for example 11.1
+                oobIpv4Address:
+                  oneOf:
+                    - $ref: '#/components/schemas/ipv4'
+                    - $ref: '#/components/schemas/dhcp'
+                  example: Acquired
+                  description: 'mgmt0 IPv4 address: (X.X.X.X/Acquired) Acquired - DHCP mode.'
+                oobIpv4Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4PrefixLength'
+                    - description: >-
+                        mgmt0 IPv4 prefix length. System ignores oobIpv4Subnet
+                        in DHCP mode.
+                oobIpv6Address:
+                  oneOf:
+                    - $ref: '#/components/schemas/ipv6'
+                    - $ref: '#/components/schemas/dhcp'
+                  example: Acquired
+                  description: >-
+                    mgmt0 IPv6 address: (CAFE::1/Acquired). Acquired - DHCP
+                    mode. If oobIpv6Address is not specified mgmt0 IPv6 address
+                    will not be set.
+                oobIpv6Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6PrefixLength'
+                    - description: >-
+                        mgmt0 IPv6 subnet mask. System ignores oobIpv6Subnet
+                        incase DHCP mode or oobIpv6Address is not specified
+                oobIpv4DefaultGateway:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4'
+                    - description: Default gateway IPv4 address for the OOB mgmt inteface
+                oobIpv6DefaultGateway:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6'
+                    - description: Default gateway IPv6 address for the OOB mgmt inteface
+                inBandIpv4Address:
+                  allOf:
+                    - description: >-
+                        Monitoring channel - Lo-0 IPv4 address (X.X.X.X). There
+                        must be at least one IPv4 or IPv6 VIP Out of Band
+                        address
+                    - $ref: '#/components/schemas/ipv4'
+                inBandIpv4Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4PrefixLength'
+                    - description: Monitoring channel - Lo-0 IPv4 subnet mask
+                inBandIpv6Address:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6'
+                    - description: >-
+                        Monitoring channel - Lo-0 IPv6 address (CAFE::1). There
+                        must be at least one IPv4 or IPv6 VIP Out of Band
+                        address
+                inBandIpv6Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6PrefixLength'
+                    - description: Monitoring channel - Lo-0 IPv6 subnet mask
+                minimumNccs:
+                  allOf:
+                    - $ref: '#/components/schemas/minimumNccType'
+                    - description: >-
+                        [1-2], Minimum number of registred NCCs to start the
+                        deployment
+                siteId:
+                  allOf:
+                    - $ref: '#/components/schemas/uuid'
+                    - description: NCE site
+                configurationData:
+                  type: object
+                  properties:
+                    filename:
+                      type: string
+                      description: configuration file name
+                      example: baseConfig.xml
+                    username:
+                      type: string
+                      example: dnroot
+                      description: user name of for configuration commit
+                    configurationId:
+                      allOf:
+                        - $ref: '#/components/schemas/uuid'
+                        - description: configuration transaction id
+                formation:
+                  type: object
+                  properties:
+                    type:
+                      allOf:
+                        - $ref: '#/components/schemas/formationType'
+                        - description: 'NCE formation: Single or Cluster'
+                    specific:
+                      allOf:
+                        - $ref: '#/components/schemas/specificType'
+                        - description: >-
+                            NCE type:
+                            SA-40C/SA-10CD/SA-32CD/SA-36CD/SA-64XXV8C/SA-64X12C-S/CL-16/CL-96/CL-32/CL-48/CL-64/CL-76/CL-192
+                nccs:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - serialNumber
+                      - nccId
+                    properties:
+                      serialNumber:
+                        type: string
+                        description: >-
+                          NCC serial number <br /><B> Note: </B> To add an
+                          addiitonal NCC, duplicate this array and add the new
+                          NCC serial number and the NCC-ID
+                      nccId:
+                        type: number
+                        minimum: 0
+                        maximum: 1
+                        description: >-
+                          NCC-ID: [0-1]. If the NCE type is not a Standalone
+                          formation, you can add upto 2 NCCs. One with an ID of
+                          0, and the other with an ID of 1
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Starting deployment
+                  processId:
+                    $ref: '#/components/schemas/uuid'
+                  clusterId:
+                    $ref: '#/components/schemas/uuid'
+          description: Starting deployment
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Deployment failed
+          description: Deployment failed
+  /api/nce-management/{cluster-id}:
+    put:
+      security:
+        - Authentication: []
+      summary: Edit NCE
+      tags:
+        - NCE Management
+      description: >-
+        Edit an existing NCE. If NCE is in 'Waiting for equipment' status all
+        required body fields should be provided as in Create NCE
+      parameters:
+        - name: cluster-id
+          in: path
+          required: true
+          description: NCE System-ID of the NCE.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        description: NCE Configuration. (Click Schema to display the element descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inBandIpv4Address
+                - inBandIpv4Subnet
+                - nccs
+              properties:
+                name:
+                  allOf:
+                    - $ref: '#/components/schemas/nameType'
+                    - description: >-
+                        NCE name. Use numbers and / or letters. The name must be
+                        at least four characters in length. No special
+                        characters such as !@#$ can be used
+                inBandIpv4Address:
+                  allOf:
+                    - description: >-
+                        Monitoring channel - Lo-0 IPv4 address (X.X.X.X). There
+                        must be at least one IPv4 or IPv6 VIP Out of Band
+                        address
+                    - $ref: '#/components/schemas/ipv4'
+                inBandIpv4Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4PrefixLength'
+                    - description: Monitoring channel - Lo-0 IPv4 subnet mask
+                inBandIpv6Address:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6'
+                    - description: >-
+                        Monitoring channel - Lo-0 IPv6 address (CAFE::1). There
+                        must be at least one IPv4 or IPv6 VIP Out of Band
+                        address
+                inBandIpv6Subnet:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6PrefixLength'
+                    - description: Monitoring channel - Lo-0 IPv6 subnet mask
+                oobIpv4DefaultGateway:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4'
+                    - description: Default gateway IPv4 address for the OOB mgmt inteface
+                oobIpv6DefaultGateway:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv6'
+                    - description: Default gateway IPv6 address for the OOB mgmt inteface
+                siteId:
+                  allOf:
+                    - $ref: '#/components/schemas/uuid'
+                    - description: NCE site
+                formation:
+                  type: object
+                  properties:
+                    type:
+                      allOf:
+                        - $ref: '#/components/schemas/formationType'
+                        - description: 'NCE formation: Single or Cluster'
+                    specific:
+                      allOf:
+                        - $ref: '#/components/schemas/specificType'
+                        - description: >-
+                            NCE type:
+                            SA-40C/SA-10CD/SA-32CD/SA-36CD/SA-64XXV8C/SA-64X12C-S/CL-16/CL-96/CL-32/CL-48/CL-64/CL-76/CL-192
+                targetGroupId:
+                  allOf:
+                    - $ref: '#/components/schemas/uuid'
+                    - description: Required group ID
+                nccs:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - serialNumber
+                      - nccId
+                    properties:
+                      serialNumber:
+                        type: string
+                        description: >-
+                          NCC serial number <br /><B> Note: </B> To add an
+                          addiitonal NCC, duplicate this array and add the new
+                          NCC serial number and the NCC-ID
+                      nccId:
+                        type: number
+                        minimum: 0
+                        maximum: 1
+                        description: >-
+                          NCC-ID: [0-1]. If the NCE type is not a Standalone
+                          formation, you can add upto 2 NCCs. One with an ID of
+                          0, and the other with an ID of 1
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Starting edit
+                  processId:
+                    $ref: '#/components/schemas/uuid'
+          description: Starting edit
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Edit failed
+          description: Edit failed
+    delete:
+      security:
+        - Authentication: []
+      summary: Delete NCE
+      tags:
+        - NCE Management
+      description: >-
+        Remove an NCE from DNOR and delete the DNOS installation on the NCE
+        nodes.
+      parameters:
+        - name: cluster-id
+          in: path
+          required: true
+          description: NCE System-ID of the NCE.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Starting delete
+                  processId:
+                    allOf:
+                      - $ref: '#/components/schemas/uuid'
+                      - example: b01a0d88-49a3-45a6-9811-fb98b10c74e9
+          description: Starting delete
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Delete failed
+          description: Delete failed
+  /api/nce-management/download/{cluster-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Download DNOS version
+      tags:
+        - NCE Management
+      description: Download a newer version of DNOS to the NCE (prior to upgrade).
+      parameters:
+        - name: cluster-id
+          in: path
+          required: true
+          description: System-ID of the NCE to download.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        description: Download values. (Click Schema to display the element descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+              properties:
+                version:
+                  type: string
+                  description: DNOS version to download
+                inBand:
+                  type: boolean
+                  default: 'false'
+                  description: >-
+                    True: Download the DNOS version to the NCC via the in-band
+                    channel. False: Download the DNOS version to the NCC via the
+                    out-of-band channel
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: Starting download
+        '403':
+          description: >-
+            Download has failed because either the cluster-id is incorrect or
+            the DNOS version was not found
+  /api/nce-management/upgrade/{cluster-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Upgrade NCE
+      tags:
+        - NCE Management
+      description: >-
+        Upgrade the version of DNOS running on an NCE. Before calling this API,
+        call /api/nce-management/precheck and retrieve precheck result from the
+        cluster activity log to verify that the upgrade can run.
+      parameters:
+        - name: cluster-id
+          in: path
+          required: true
+          description: System-ID of the NCE to upgrade.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        description: Upgrade detail
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: Starting replace/upgrade process
+        '404':
+          description: NCE system-ID doesn\'t exist
+  /api/nce-management/cancel/{cluster-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Cancel current process on NCE
+      tags:
+        - NCE Management
+      description: >-
+        Cancel the current process running on an NCE, such as upgrade or NCE
+        deployment.
+      parameters:
+        - in: path
+          name: cluster-id
+          required: true
+          description: System-ID of the NCE to cancel
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: Successful
+        '403':
+          content:
+            application/json: {}
+          description: Cannot cancel the process at the current stage
+        '404':
+          content:
+            application/json: {}
+          description: Cannot cancel the process - process not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot cancel the process - unknown error
+  /api/nce-management/precheck/{cluster-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Preupgrade validation
+      tags:
+        - NCE Management
+      description: >-
+        Validate that DNOR has the running NCE images in the image repository,
+        (if a revert is required), that the new DNOS version was downloaded to
+        the NCE nodes, and that there is out-of-band connectivity to at least
+        one NCC or NCP if the NCE is a standalone formation.
+      parameters:
+        - in: path
+          name: cluster-id
+          required: true
+          description: >-
+            System-ID of the NCE to perform a Preupgrade check. The system-ID
+            can be displayed using the CLI command, show system version
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: Starting upgrade precheck
+        '403':
+          content:
+            application/json: {}
+          description: Precheck failed
+  /api/redundancy/disable:
+    put:
+      security:
+        - Authentication: []
+      summary: Disable DNOR Node
+      tags:
+        - Redundancy
+      description: Disable all DNOR services on node
+      requestBody:
+        description: >-
+          Disable DNOR node values. (Click Schema to display the element
+          descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dnorRole
+                - addr
+              properties:
+                dnorRole:
+                  allOf:
+                    - $ref: '#/components/schemas/DnorRole'
+                    - description: The role of the target DNOR node
+                addr:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4'
+                    - description: IP address of the target DNOR node
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancyDisableSuccessMsg'
+                  code:
+                    $ref: '#/components/schemas/uuid'
+          description: Disable DNOR node, starting
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancyDisableFailMsg'
+          description: Disable DNOR node failed
+  /api/redundancy/enable:
+    put:
+      security:
+        - Authentication: []
+      summary: Enable DNOR node
+      tags:
+        - Redundancy
+      description: Enable all DNOR services on node
+      requestBody:
+        description: >-
+          Enable DNOR node values. (Click Schema to display the element
+          descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dnorRole
+                - addr
+              properties:
+                dnorRole:
+                  allOf:
+                    - $ref: '#/components/schemas/DnorRole'
+                    - description: The role of target DNOR node
+                addr:
+                  allOf:
+                    - $ref: '#/components/schemas/ipv4'
+                    - description: IP address of target DNOR node
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancyEnableSuccessMsg'
+                  code:
+                    $ref: '#/components/schemas/uuid'
+          description: Enable DNOR node, starting
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancyEnableFailMsg'
+          description: Enable DNOR node failed
+  /api/redundancy:
+    put:
+      security:
+        - Authentication: []
+      summary: Manual switchover
+      tags:
+        - Redundancy
+      description: Trigger manual switchover on the active DNOR node
+      requestBody:
+        description: Manual switchover.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancySwitchoverSuccessMsg'
+                  success:
+                    type: boolean
+                    example: 'True'
+          description: Manual switchover succeeded
+        '403':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: '#/components/schemas/RedundancySwitchoverFailMsg'
+          description: Manual switchover failed
+  /api/target-group/groups:
+    get:
+      security:
+        - Authentication: []
+      summary: Get all existing target groups
+      tags:
+        - NCE Group Management
+      description: Get all existing target groups
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfTargetGroup'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot get all target groups
+        '500':
+          content:
+            application/json: {}
+          description: Cannot get all target groups - unknown error
+  /api/target-group/create-group:
+    post:
+      security:
+        - Authentication: []
+      summary: Create new target group
+      tags:
+        - NCE Group Management
+      description: Create new target group
+      requestBody:
+        description: >-
+          Target group details. (Click Schema to display the element
+          descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - groupName
+                - parentGroupId
+              properties:
+                groupName:
+                  type: string
+                  example: firstGroup
+                  description: Target group name, for example firstGroup
+                parentGroupId:
+                  type: string
+                  example: firstGroupId
+                  description: >-
+                    Parent group id, higher level on group hierarchy. If there
+                    is no parent group - root group id
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Free text message
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: The created target group ID.
+                    description: Additional data.
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot create new target group
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot create new target group - parent group ID not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot create new target group - unknown error
+  /api/target-group/update-group/{group-id}:
+    put:
+      security:
+        - Authentication: []
+      summary: Update target group
+      tags:
+        - NCE Group Management
+      description: Update target group
+      parameters:
+        - name: group-id
+          in: path
+          required: true
+          description: Required group ID.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        description: >-
+          Target group details. (Click Schema to display the element
+          descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                groupName:
+                  type: string
+                  example: groupName
+                  description: Updated group name
+                parentGroupId:
+                  type: string
+                  example: parentGroupId
+                  description: Updated parent group ID
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot update target group
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: >-
+            Cannot update target group - the requested group ID or parent group
+            ID is not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot update target group - unknown error
+  /api/target-group/{group-id}:
+    delete:
+      security:
+        - Authentication: []
+      summary: Delete target group by id
+      tags:
+        - NCE Group Management
+      description: Delete target group by id
+      parameters:
+        - name: group-id
+          in: path
+          required: true
+          description: Required group ID.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot delete target group
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot delete target group - group-id not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot delete target group - unknown error
+  /api/task-management/task-executions:
+    get:
+      security:
+        - Authentication: []
+      summary: Get all tasks executions, past and currently running
+      tags:
+        - Task Management
+      description: Get all tasks executions
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskExecution'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot get all tasks executions
+        '500':
+          content:
+            application/json: {}
+          description: Cannot get all tasks executions - unknown error
+  /api/task-management/tasks:
+    get:
+      security:
+        - Authentication: []
+      summary: Get all tasks
+      tags:
+        - Task Management
+      description: Get all tasks
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot get all tasks
+        '500':
+          content:
+            application/json: {}
+          description: Cannot get all tasks - unknown error
+  /api/task-management/create-task:
+    post:
+      security:
+        - Authentication: []
+      summary: Create new task
+      tags:
+        - Task Management
+      description: Create new task
+      requestBody:
+        description: Task details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: The created task ID.
+                    description: Additional data.
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot create new task
+        '500':
+          content:
+            application/json: {}
+          description: Cannot create new task - unknown error
+  /api/task-management/update-task/{task-id}:
+    put:
+      security:
+        - Authentication: []
+      summary: Update task
+      tags:
+        - Task Management
+      description: Update task
+      parameters:
+        - name: task-id
+          in: path
+          required: true
+          description: Required task ID
+          schema:
+            $ref: '#/components/schemas/uuid'
+      requestBody:
+        description: Task details. (Click Schema to display the element descriptions)
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot update task
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot update task - task-id not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot update task - unknown error
+  /api/task-management/execute-task/{task-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Execute task
+      tags:
+        - Task Management
+      description: Execute task
+      parameters:
+        - name: task-id
+          in: path
+          required: true
+          description: Required task ID.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot start task
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot start task - task-id not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot start task - unknown error
+  /api/task-management/cancel-task/{task-execution-id}:
+    post:
+      security:
+        - Authentication: []
+      summary: Cancel running task execution
+      tags:
+        - Task Management
+      description: Cancel running task execution
+      parameters:
+        - name: task-execution-id
+          in: path
+          required: true
+          description: Task execution ID
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot cancel required task
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot cancel required task - task-id not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot cancel required task - unknown error
+  /api/task-management/delete-task/{task-id}:
+    delete:
+      security:
+        - Authentication: []
+      summary: Delete task
+      tags:
+        - Task Management
+      description: Delete task by task-id
+      parameters:
+        - name: task-id
+          in: path
+          required: true
+          description: Required Task id.
+          schema:
+            $ref: '#/components/schemas/uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Successful
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot delete task
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseMessage'
+          description: Cannot delete task - task-id not found
+        '500':
+          content:
+            application/json: {}
+          description: Cannot delete task - unknown error
+  /api/services/monitoring/fault-management/alarms/{alarm-name}:
+    get:
+      security:
+        - Authentication: []
+      summary: Get alarm configuration
+      tags:
+        - Monitoring Fault Management Alarms
+      description: Get alarm configuration by alarm name.
+      parameters:
+        - name: alarm-name
+          in: path
+          required: true
+          schema:
+            type: string
+            example: DnorHostCpuUsage
+          description: The alarm name.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: '#/components/schemas/KeyType'
+                  nodeType:
+                    $ref: '#/components/schemas/NodeType'
+                  subObject:
+                    $ref: '#/components/schemas/SubObject'
+                  resource:
+                    $ref: '#/components/schemas/Resource'
+                  subResource:
+                    $ref: '#/components/schemas/SubResource'
+                  syslogName:
+                    type: string
+                    example: DNOR_CONTAINER_MEMORY_USAGE_CRITICAL
+                  displaySeverity:
+                    $ref: '#/components/schemas/displaySeverity'
+                  enableAlarm:
+                    $ref: '#/components/schemas/AdminState'
+                  enableAlarmSyslog:
+                    $ref: '#/components/schemas/AdminState'
+                  alarmRule:
+                    type: string
+                    example: >-
+                      (sum(container_memory_usage_bytes) BY (instance) /
+                      node_memory_MemTotal_bytes * 100)
+                  createdAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$
+                  udatedAt:
+                    type: string
+                    format: date-time
+                    pattern: ^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$
+                  summary:
+                    type: string
+                    example: Container Memory usage is above 80%
+                  message:
+                    type: string
+                    example: OK
+          description: Get Alarm configuration
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error
+          description: Get alarm configuration by alarm name failed
+  /api/services/monitoring/fault-management/alarms/:
+    get:
+      security:
+        - Authentication: []
+      summary: Get all alarms configuration
+      tags:
+        - Monitoring Fault Management Alarms
+      description: Get all alarms configuration.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    key:
+                      $ref: '#/components/schemas/KeyType'
+                    nodeType:
+                      $ref: '#/components/schemas/NodeType'
+                    subObject:
+                      $ref: '#/components/schemas/SubObject'
+                    resource:
+                      $ref: '#/components/schemas/Resource'
+                    subResource:
+                      $ref: '#/components/schemas/SubResource'
+                    syslogName:
+                      type: string
+                      example: DNOR_CONTAINER_MEMORY_USAGE_CRITICAL
+                    displaySeverity:
+                      $ref: '#/components/schemas/displaySeverity'
+                    enableAlarm:
+                      $ref: '#/components/schemas/AdminState'
+                    enableAlarmSyslog:
+                      $ref: '#/components/schemas/AdminState'
+                    alarmRule:
+                      type: string
+                      example: >-
+                        (sum(container_memory_usage_bytes) BY (instance) /
+                        node_memory_MemTotal_bytes * 100)
+                    summary:
+                      type: string
+                      example: Container Memory usage is above 80%
+                    createdAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$
+                    udatedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$
+                    message:
+                      type: string
+                      example: OK
+          description: Get all alarms configuration
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error
+          description: Get all alarms configuration failed
+  /api/services/monitoring/fault-management/active-alarms/:
+    get:
+      security:
+        - Authentication: []
+      summary: Get active alarms
+      tags:
+        - Monitoring Fault Management Active Alarms
+      description: Get all active alarm.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  properties:
+                    alarmName:
+                      type: string
+                      example: DnorHostCpuUsage
+                    key:
+                      $ref: '#/components/schemas/KeyType'
+                    nodeType:
+                      $ref: '#/components/schemas/NodeType'
+                    nodeId:
+                      type: string
+                    subObject:
+                      $ref: '#/components/schemas/SubObject'
+                    resource:
+                      $ref: '#/components/schemas/Resource'
+                    subResource:
+                      $ref: '#/components/schemas/SubResource'
+                    syslogName:
+                      type: string
+                      example: DNOR_CONTAINER_MEMORY_USAGE_CRITICAL
+                    displaySeverity:
+                      $ref: '#/components/schemas/displaySeverity'
+                    systemStatus:
+                      $ref: '#/components/schemas/alarmStatus'
+                    raisedAt:
+                      type: string
+                      format: date-time
+                      pattern: ^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$
+                    hrValue:
+                      type: string
+                      example: 80.2
+                    summary:
+                      type: string
+                      example: Container Memory usage is above 80%
+                    message:
+                      type: string
+                      example: OK
+          description: Get all active alarms.
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Error
+          description: Get all active alarms failed
 components:
   securitySchemes:
-    JWT:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-    auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: 'http://example.com/api/oauth/dialog'
-          scopes:
-            'read:kitchen': read kitchen ingredients
-            'write:kitchen': modify kitchen ingredients
+    Authentication:
+      type: apiKey
+      name: Authorization
+      in: header
+  schemas:
+    common:
+      properties:
+        createdUpdatedAt:
+          properties:
+            createdAt:
+              type: string
+              example: '2020-12-30T07:03:46.942Z'
+              readOnly: true
+            updatedAt:
+              type: string
+              example: '2020-12-30T07:07:46.942Z'
+              readOnly: true
+    dhcp:
+      type: string
+      enum:
+        - Acquired
+    ipv4:
+      type: string
+      format: ipv4
+      pattern: >-
+        ^(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$
+    ipv4PrefixLength:
+      type: number
+      format: ipv4PrefixLength
+      example: 24
+      minimum: 0
+      maximum: 32
+    ipv6:
+      type: string
+      format: ipv6
+      pattern: >-
+        (^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?(\\/(([1-9]{1})|([1-9]{1}(|[0-9]{1}))|(1(([0-1]{1}[0-9]{1})|(2[0-8]{1})))))\\s*$)
+    ipv6PrefixLength:
+      type: number
+      format: ipv6PrefixLength
+      example: 127
+      minimum: 0
+      maximum: 128
+    uuid:
+      type: string
+      format: uuid
+      pattern: >-
+        ^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$
+    formationType:
+      type: string
+      enum:
+        - Single
+        - Cluster
+      example: Cluster
+    specificType:
+      type: string
+      enum:
+        - SA-40C
+        - SA-10CD
+        - SA-32CD
+        - SA-36CD
+        - SA-64XXV8C
+        - SA-64X12C-S
+        - CL-16
+        - CL-32
+        - CL-48
+        - CL-64
+        - CL-76
+        - CL-96
+        - CL-192
+      example: CL-96
+    nameType:
+      type: string
+      format: ^[A-Za-z0-9_-]{4-32}+$
+      example: NY22C
+    minimumNccType:
+      type: number
+      format: minimumNccType
+      example: 2
+      minimum: 1
+      maximum: 2
+    RedundancyStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - STANDBY
+        - Error
+        - STANDBY_COLD
+      example: ACTIVE
+    KeepaliveStatus:
+      type: string
+      enum:
+        - OFFLINE
+        - ACTIVE
+        - STANDBY
+        - STANDBY_COLD
+        - PAUSED
+        - ERROR
+        - VERSIONS_MISMATCH
+        - STARTING
+      example: STANDBY_COLD
+    DnorRole:
+      type: string
+      enum:
+        - PRIMARY
+        - SECONDARY
+        - TERTIARY
+      example: PRIMARY
+    AdminState:
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
+      example: ENABLED
+    KeyType:
+      type: string
+      enum:
+        - DNOR
+        - NCE
+      example: DNOR
+    NodeType:
+      type: string
+      enum:
+        - NCC
+        - NCF
+        - NCP
+        - NCM
+      example: NCC
+    SubObject:
+      type: string
+      enum:
+        - HOST
+        - CONTAINER
+        - POSTGRES
+        - RABBIT
+        - ELK
+        - REDIS
+      example: HOST, CONTAINER
+    Resource:
+      type: string
+      enum:
+        - CPU
+        - INSTANCE
+        - REJECTED
+        - CONNECTIONS
+        - SQL
+        - CLUSTER
+        - CHANNELS
+        - DISK
+        - MEMORY
+        - QUEUE
+        - VOLUME
+        - FAN
+        - SENSOR
+      example: CPU, INSTANCE
+    SubResource:
+      type: string
+      enum:
+        - USAGE
+        - STATE
+        - SYNC
+        - SQL
+        - TASKS
+        - COUNT
+        - IO
+        - SPACE
+      example: USAGE, STATE
+    displaySeverity:
+      type: string
+      enum:
+        - INFO
+        - WARNING
+        - CRITICAL
+      example: INFO
+    alarmStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - CLOSED
+        - INACTIVE
+        - UNDEFINED
+        - DISABLED
+      example: UNDEFINED
+    RedundancyImageSyncEnum:
+      type: string
+      enum:
+        - Synchronized
+        - Not Synchronized
+        - N/A
+      example: Synchronized
+    RedundancyEnableSuccessMsg:
+      type: string
+      description: |
+        DNOR node Enable error messages.
+        * `ENABLE_NODE_STARTING` - Enable DNOR node, starting
+        * `UPDATE_CONFIGURATION_SUCCEEDED` - Update configuration succeeded
+      enum:
+        - Enable DNOR node, starting
+        - Update configuration succeeded
+    RedundancyDisableSuccessMsg:
+      type: string
+      description: >
+        DNOR node Disable success messages.
+
+        * `DISABLE_NODE_STARTING` - Disable DNOR node, starting
+
+        * `UPDATE_CONFIGURATION_SUCCEEDED` - Update configuration
+        succeeded
+      enum:
+        - Update configuration succeeded
+        - Disable DNOR node, starting
+    RedundancySwitchoverSuccessMsg:
+      type: string
+      description: |
+        Switchover success messages.
+        * `SWITCHOVER_SUCCEEDED` - Switchover DNOR node, succeeded
+      enum:
+        - Switchover DNOR node, succeeded
+    RedundancyEnableFailMsg:
+      type: string
+      description: >
+        DNOR node Enable error messages.
+
+        * `ENABLE_NODE_FAILED` - Enable DNOR node, failed
+
+        * `ENABLE_NODE_IN_PROGRESS` - Enable DNOR node, in progress
+
+        * `UPDATE_CONFIGURATION_FAILED` - Update configuration failed
+
+        * `ENABLE_NODE_FAILED_NODE_IN_ACTIVE` - Enable DNOR node, failed reason:
+        keepalive status in cold mode
+      enum:
+        - Enable DNOR node, failed
+        - Enable DNOR node, in progress
+        - Update configuration failed
+        - 'Enable DNOR node, failed reason: keepalive status in cold mode'
+    RedundancyDisableFailMsg:
+      type: string
+      description: >
+        DNOR node Disable error messages.
+
+        * `DISABLE_NODE_FAILED` - Disable DNOR node, failed
+
+        * `DISABLE_NODE_IN_PROGRESS` - Disable DNOR node, in progress
+
+        * `UPDATE_CONFIGURATION_FAILED` - Update configuration failed
+
+        * `DISABLE_NODE_FAILED_NODE_IN_COLD` - Disable DNOR node, failed reason:
+        keepalive status in cold mode
+      enum:
+        - Disable DNOR node, failed
+        - Disable DNOR node, in progress
+        - Update configuration failed
+        - 'Disable DNOR node, failed reason: keepalive status in cold mode'
+        - 'Disable DNOR node, failed reason: keepalive status in active mode'
+    RedundancySwitchoverFailMsg:
+      type: string
+      description: >
+        Switchover fail messages.
+
+        * `SWITCHOVER_FAILED` - Switchover DNOR node, failed
+
+        * `SWITCHOVER_FAILED_OUT_OF_SYNC` - Switchover DNOR node, failed
+        reason: lag out of sync
+
+        * `SWITCHOVER_FAILED_NOT_HEALTHY` - Switchover DNOR node, failed reason:
+        not healthy
+
+        * `SWITCHOVER_IN_PROGRESS` - Switchover DNOR node, in progress
+      enum:
+        - Switchover DNOR node, failed
+        - 'Switchover DNOR node, failed  reason: lag out of sync'
+        - 'Switchover DNOR node, failed reason: not healthy'
+        - Switchover DNOR node, in progress
+    RedundancySyncStatusEnum:
+      type: string
+      enum:
+        - Synchronized
+        - Not Synchronized
+        - N/A
+      example: Synchronized
+    ArrayOfTargetGroup:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            example: groupId
+            description: Target group id
+          groupName:
+            type: string
+            example: groupName
+            description: Target group name
+          parentGroupId:
+            type: string
+            example: parentGroupId
+            description: Parent target group id if exist, or if root group - undefined
+          isRootGroup:
+            type: boolean
+            example: false
+            description: Is root group flag
+          clusters:
+            type: array
+            items:
+              type: object
+            description: NCEs contained in this group
+          groups:
+            type: array
+            items:
+              type: object
+            description: Groups contained in this group
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          example: testTask
+          description: Task name
+        createdAt:
+          type: string
+          example: '2020-12-30T07:03:46.942Z'
+          description: UTC date and time of task creation
+          readOnly: true
+        updatedAt:
+          type: string
+          example: '2020-12-30T07:03:46.942Z'
+          description: UTC date and time of last update of task settings
+          readOnly: true
+        function:
+          type: string
+          enum:
+            - Software Download
+            - Software Upgrade
+            - Software Rollback
+            - Upgrade Precheck
+            - Rollback Precheck
+            - Generate Tech Support
+          example: Software Upgrade
+          description: Required task function
+        activation:
+          type: string
+          enum:
+            - Manual
+            - Schedule
+            - Recurrence
+          example: Recurrence
+        scheduledOnce:
+          type: object
+          description: Start date and time, required if activation is set to Schedule
+          properties:
+            startDate:
+              type: string
+              example: 08-11-2020
+              description: UTC date to start task execution, in format dd-mm-yyyy
+            startTime:
+              type: string
+              example: '14:15'
+              description: UTC time to start task execution, in format hh:mm
+        scheduledRecurrent:
+          type: object
+          description: >-
+            Recurrent scheduling settings, required if activation is set to
+            Recurrence
+          properties:
+            startDate:
+              type: string
+              example: 08-11-2020
+              description: Start date of recurrent task time period, in format dd-mm-yyyy
+            endDate:
+              type: string
+              example: 08-11-2020
+              description: End date of recurrent task time period, in format dd-mm-yyyy
+            timeFrame:
+              type: string
+              description: Time frame, required if activation is set to Recurrence
+              enum:
+                - Daily
+                - Weekly
+                - Monthly
+                - Yearly
+              example: Weekly
+            daysOfWeek:
+              type: array
+              description: >-
+                Days of week to execute the task, required if weekly time frame
+                is chosen.
+              items:
+                type: string
+                enum:
+                  - Sunday
+                  - Monday
+                  - Tuesday
+                  - Wednesday
+                  - Thursday
+                  - Friday
+                  - Saturday
+            daysOfMonth:
+              type: string
+              description: >-
+                Days of month to execute the task, required if yearly or monthly
+                time frame is chosen. Comma-separated list of days numbers.
+              example: 1,4,15
+            months:
+              type: array
+              description: >-
+                Months to execute the task, required if yearly time frame is
+                chosen.
+              items:
+                type: string
+                enum:
+                  - January
+                  - February
+                  - March
+                  - April
+                  - May
+                  - June
+                  - July
+                  - August
+                  - September
+                  - October
+                  - November
+                  - December
+            timeOfDay:
+              type: string
+              example: '14:15'
+              description: >-
+                UTC time of day to execute the task, in format hh:mm. Required
+                if activation is set to Recurrence.
+        targetNCEs:
+          type: array
+          description: IDs of target NCEs
+          items:
+            type: string
+        groupIdList:
+          type: array
+          description: IDs of target groups of NCEs
+          items:
+            type: string
+        additionalInfo:
+          type: object
+          example:
+            management-channel: In-Band
+          description: >-
+            Required additional data - for example in case of download function,
+            management-channel is needed
+          properties:
+            dnosVersion:
+              type: string
+              example: 11.5.9
+              description: DNOS Resource Version
+            managementChannel:
+              type: string
+              example: In Band (IB)
+              description: management channel
+            dnosTs:
+              type: object
+              description: >-
+                TechSupport task settings, required if task function is Generate
+                Tech Support
+              allOf:
+                - $ref: '#/components/schemas/DnosTs'
+    TaskExecution:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Task execution ID
+        state:
+          type: string
+          enum:
+            - Saved
+            - In progress
+            - Completed
+            - Canceled
+            - Cancelling
+          example: Completed
+          readOnly: true
+          description: State of task execution
+        result:
+          type: string
+          example: Ok
+          readOnly: true
+          description: Task execution result
+        actualStartTime:
+          type: string
+          example: '2020-12-30T07:03:46.942Z'
+          description: UTC time of task execution start
+        actualEndTime:
+          type: string
+          example: '2020-12-30T07:03:46.942Z'
+          description: UTC time of task execution end
+        targetNCEs:
+          type: array
+          description: IDs of target NCEs
+          items:
+            type: string
+        task:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/Task'
+    CreateTaskRequest:
+      type: object
+      required:
+        - name
+        - function
+        - activation
+      allOf:
+        - $ref: '#/components/schemas/Task'
+    DnosTs:
+      type: object
+      properties:
+        fileName:
+          type: string
+          example: fileName
+          description: Techsupport file name
+        fetch:
+          type: boolean
+          example: 'True'
+          description: >-
+            If true, DNOR will fetch the techsupport file from NCE and store it
+            on DNOR as well. Otherwise the file will be stored only on NCE.
+        request:
+          type: string
+          example: >-
+            request system tech-support test component datapath include
+            basic,core-dumps force
+          description: >-
+            DNOS CLI command to generate techsupport file. See DNOS User Guide
+            for details.
+    ResponseMessage:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Free text message
+    Port:
+      type: object
+      properties:
+        id:
+          type: number
+        clusterId:
+          type: string
+        nodeType:
+          type: string
+          enum:
+            - RoutingEngine
+            - ForwardingEngine
+            - Whitebox
+            - ncp
+            - ncf
+            - ncm
+            - x86
+            - NA
+            - ncc
+            - '-'
+            - bundle
+            - NCC
+            - X86
+            - NC
+        nodeId:
+          type: string
+        portName:
+          type: string
+        portIndex:
+          type: string
+        interfaceSpeed:
+          anyOf:
+            - type: string
+            - type: number
+        adminState:
+          type: string
+          enum:
+            - D400G
+            - F400G
+            - D100G
+            - D25G
+            - D10G
+        description:
+          type: string
+        operStatus:
+          type: string
+          enum:
+            - up
+            - down
+            - system-down
+            - xc-down
+            - not-exist
+            - not-available
+            - up-with-error
+            - up-with-errors
+            - partially-up
+            - not-present
+            - not present (b)
+        portType:
+          type: string
+          enum:
+            - fabric
+            - data
+            - ctrl
+        breakoutPorts:
+          type: array
+          items:
+            type: object
+            properties:
+              portName:
+                type: string
+              supported-mode:
+                type: array
+                items:
+                  type: string
+              channel-id:
+                type: number
+              state:
+                type: string
+                enum:
+                  - child
+                  - parent
+                  - sacrificed
+                  - none
+              sacrificed-port:
+                type: string
+              mode:
+                type: string
+                enum:
+                  - none
+                  - b10g-4x
+              parent-port:
+                type: string
+              adminState:
+                type: string
+                enum:
+                  - enabled
+                  - disabled
+                  - UP
+                  - DOWN
+              description:
+                type: string
+              operStatus:
+                type: string
+                enum:
+                  - up
+                  - down
+                  - system-down
+                  - xc-down
+                  - not-exist
+                  - not-available
+                  - up-with-error
+                  - up-with-errors
+                  - partially-up
+                  - not-present
+                  - not present (b)
+              interfaceSpeed:
+                anyOf:
+                  - type: string
+                  - type: number
+        formFactor:
+          type: string
+        ethernetPmd:
+          type: string
+        wavelength:
+          type: string
+        vendor:
+          type: string
+        vendorOui:
+          type: string
+        vendorPart:
+          type: string
+        vendorRev:
+          type: string
+        serialNumber:
+          type: string
+        revisionCompliance:
+          type: string
+        allocated:
+          type: boolean
+        configured:
+          type: boolean
+        vrf:
+          type: string
+    ClusterStatus:
+      type: string
+      enum:
+        - Precheck
+        - Precheck Rollback
+        - Precheck Update FW
+        - Running
+        - Offline
+        - NCC replacement
+        - Deployment - Preparation
+        - Deployment - Waiting For Equipment
+        - Deployment - Downloading
+        - Deployment - Installing
+        - Deployment - Validation
+        - Deployment - Failed
+        - Deployment - Cancelled
+        - Running - Adding NCC
+        - Running - Remove NCC
+        - Running - Password recovery
+        - Deleting
+        - In Upgrade
+        - Upgrade Preparation
+        - Upgrade Process
+        - Upgrade Validation
+        - Upgrade - Rollback
+        - Rollback Preparation
+        - Rollback Process
+        - Rollback Validation
+        - Running - Downloading
+        - Download Preparation
+        - Download Process
+        - Download Validation
+        - Upgrade Failed
+        - Deleting Failed
+        - Upgrade - Rollback Failed
+        - Communication Error - Application Out Of Band
+        - Communication Error - Platform Out Of Band
+        - Upgrade - Cancelled
+        - Upgrade - Rollback cancelled
+        - Running - configuration backup
+        - Running - configuration update
+        - Running - Conflicted Name
+        - Add Service - In Progress
+        - Remove Service - In Progress
+        - Start Service - In Progress
+        - Stop Service - In Progress
+        - Edit Service - In Progress
+        - Add ISL - In Progress
+        - Edit ISL - In Progress
+        - Delete ISL - In Progress
