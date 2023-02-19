@@ -1580,8 +1580,8 @@ components:
       type: string
       description: |
         DNOR node Enable error messages.
-        * `ENABLE_NODE_STARTING` - Enable DNOR node, starting
-        * `UPDATE_CONFIGURATION_SUCCEEDED` - Update configuration succeeded
+        * "ENABLE_NODE_STARTING" - Enable DNOR node, starting
+        * "UPDATE_CONFIGURATION_SUCCEEDED" - Update configuration succeeded
       enum:
         - Enable DNOR node, starting
         - Update configuration succeeded
@@ -1590,9 +1590,9 @@ components:
       description: >
         DNOR node Disable success messages.
 
-        * `DISABLE_NODE_STARTING` - Disable DNOR node, starting
+        * "DISABLE_NODE_STARTING" - Disable DNOR node, starting
 
-        * `UPDATE_CONFIGURATION_SUCCEEDED` - Update configuration
+        * "UPDATE_CONFIGURATION_SUCCEEDED" - Update configuration
         succeeded
       enum:
         - Update configuration succeeded
@@ -1601,7 +1601,7 @@ components:
       type: string
       description: |
         Switchover success messages.
-        * `SWITCHOVER_SUCCEEDED` - Switchover DNOR node, succeeded
+        * "SWITCHOVER_SUCCEEDED" - Switchover DNOR node, succeeded
       enum:
         - Switchover DNOR node, succeeded
     RedundancyEnableFailMsg:
@@ -1609,13 +1609,13 @@ components:
       description: >
         DNOR node Enable error messages.
 
-        * `ENABLE_NODE_FAILED` - Enable DNOR node, failed
+        * "ENABLE_NODE_FAILED" - Enable DNOR node, failed
 
-        * `ENABLE_NODE_IN_PROGRESS` - Enable DNOR node, in progress
+        * "ENABLE_NODE_IN_PROGRESS" - Enable DNOR node, in progress
 
-        * `UPDATE_CONFIGURATION_FAILED` - Update configuration failed
+        * "UPDATE_CONFIGURATION_FAILED" - Update configuration failed
 
-        * `ENABLE_NODE_FAILED_NODE_IN_ACTIVE` - Enable DNOR node, failed reason:
+        * "ENABLE_NODE_FAILED_NODE_IN_ACTIVE" - Enable DNOR node, failed reason:
         keepalive status in cold mode
       enum:
         - Enable DNOR node, failed
@@ -1627,13 +1627,13 @@ components:
       description: >
         DNOR node Disable error messages.
 
-        * `DISABLE_NODE_FAILED` - Disable DNOR node, failed
+        * "DISABLE_NODE_FAILED" - Disable DNOR node, failed
 
-        * `DISABLE_NODE_IN_PROGRESS` - Disable DNOR node, in progress
+        * "DISABLE_NODE_IN_PROGRESS" - Disable DNOR node, in progress
 
-        * `UPDATE_CONFIGURATION_FAILED` - Update configuration failed
+        * "UPDATE_CONFIGURATION_FAILED" - Update configuration failed
 
-        * `DISABLE_NODE_FAILED_NODE_IN_COLD` - Disable DNOR node, failed reason:
+        * "DISABLE_NODE_FAILED_NODE_IN_COLD" - Disable DNOR node, failed reason:
         keepalive status in cold mode
       enum:
         - Disable DNOR node, failed
@@ -1646,15 +1646,15 @@ components:
       description: >
         Switchover fail messages.
 
-        * `SWITCHOVER_FAILED` - Switchover DNOR node, failed
+        * "SWITCHOVER_FAILED" - Switchover DNOR node, failed
 
-        * `SWITCHOVER_FAILED_OUT_OF_SYNC` - Switchover DNOR node, failed
+        * "SWITCHOVER_FAILED_OUT_OF_SYNC" - Switchover DNOR node, failed
         reason: lag out of sync
 
-        * `SWITCHOVER_FAILED_NOT_HEALTHY` - Switchover DNOR node, failed reason:
+        * "SWITCHOVER_FAILED_NOT_HEALTHY" - Switchover DNOR node, failed reason:
         not healthy
 
-        * `SWITCHOVER_IN_PROGRESS` - Switchover DNOR node, in progress
+        * "SWITCHOVER_IN_PROGRESS" - Switchover DNOR node, in progress
       enum:
         - Switchover DNOR node, failed
         - 'Switchover DNOR node, failed  reason: lag out of sync'
