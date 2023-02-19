@@ -9,6 +9,7 @@ lint:
     - recommended
   rules:
     operation-4xx-response: off
+    no-path-trailing-slash: off
 features.openapi:
   htmlTemplate: ./docs/index.html
   generateCodeSamples:
